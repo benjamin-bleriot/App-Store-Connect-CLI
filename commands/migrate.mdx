@@ -30,9 +30,22 @@ Imports update the experience linked to the selected version. Creating a missing
 experience requires exactly one App Clip on the app; ambiguous apps fail before
 any changes. Failed uploads report surviving reservations and completed changes.
 
-Migrate dry-run reports the selected local asset inputs; it does not compare
-remote checksums or determine which uploads will be skipped. Canonical
-`metadata push --dry-run` includes the remote asset comparison.
+By default, migrate dry-run reports the selected local asset inputs without
+comparing remote assets. With explicit app and version IDs, this default plan
+stays offline. Add `--check-remote` to `--dry-run` to authenticate and read the
+selected version's App Clip and App Preview state, including delivered media
+when needed, and list the planned store asset writes. This comparison makes no
+remote changes and does not assess complete metadata or submission readiness.
+
+```bash theme={null}
+asc migrate import --app "APP_ID" --version-id "VERSION_ID" --fastlane-dir ./fastlane --dry-run --check-remote
+```
+
+Remote comparison reports `remoteChecked: true` in JSON. Changed assets appear
+in `assetResults` with `status: "planned"`; unchanged assets have no planned
+write entries. Table and Markdown output explicitly say when no remote store
+asset changes are needed. Canonical `metadata push --dry-run` also includes
+remote asset comparison.
 
 Preview exports include `order.json` per device folder to preserve provider order
 without renaming videos. Imports accept that sidecar or use filename order when
@@ -112,6 +125,7 @@ asc migrate import --app "APP_ID" --version-id "VERSION_ID" --fastlane-dir ./fas
 * `--version-id` - App Store version ID (required unless Deliverfile app\_version + platform)
 * `--fastlane-dir` - Path to fastlane directory (optional)
 * `--dry-run` - Preview changes without uploading
+* `--check-remote` - Compare remote store assets during a dry run (requires `--dry-run`)
 * `--confirm` - Confirm uploading the imported metadata and screenshots (required unless `--dry-run`)
 * `--skip-screenshots` - Skip screenshot discovery and upload
 * `--allow-external-metadata` - Trust Deliverfile metadata paths and symlinks outside the selected Fastlane directory

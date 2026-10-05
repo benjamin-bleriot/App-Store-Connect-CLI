@@ -523,8 +523,11 @@ func TestAuthLoginCommand(t *testing.T) {
 		if !strings.Contains(stderr, "--key-id is required") {
 			t.Fatalf("expected key ID error in stderr, got %q", stderr)
 		}
-		if strings.Contains(stderr, "Hint:") {
+		if strings.Contains(stderr, "key file name suggests") {
 			t.Fatalf("expected no key ID hint for a generic key file name, got %q", stderr)
+		}
+		if !strings.Contains(stderr, "Hint: create an API key at "+authsvc.APIKeysURL+", then run: "+authsvc.LoginCommandExample+"\n") {
+			t.Fatalf("expected login form hint, got %q", stderr)
 		}
 	})
 

@@ -77,8 +77,8 @@ func TestRunSubscriptionsSetupMissingMetadataReportsBlockersAsExpectedNegative(t
 	if !strings.Contains(stdout, `"failedStep":"verify_state"`) || !strings.Contains(stdout, `"diagnostics":[`) {
 		t.Fatalf("stdout = %q, want the structured result with diagnostics", stdout)
 	}
-	if !strings.HasPrefix(stderr, "Error: subscriptions setup: verify_state: apple reports subscription state MISSING_METADATA after setup\n") {
-		t.Fatalf("stderr = %q, want failed step and error first", stderr)
+	if !strings.HasPrefix(stderr, "Error: subscriptions setup: verify_state: apple reports subscription state MISSING_METADATA after setup\n") || strings.Count(stderr, "Error:") != 1 {
+		t.Fatalf("stderr = %q, want one error line with the failed step first", stderr)
 	}
 	for _, want := range []string{
 		"\n- Subscription localizations: ",

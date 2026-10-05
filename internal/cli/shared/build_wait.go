@@ -695,10 +695,9 @@ func linkedBuildUploadID(ctx context.Context, client *asc.Client, appID, buildID
 
 // findBuildUploadByVersion matches an upload by the artifact identity it was
 // uploaded with. Processing details are reported per app, build number,
-// marketing version, and platform, so any upload matching all four describes
-// the same artifact as the build; an incomplete identity is left unmatched
-// rather than guessed. The lookup stays on the first page because these
-// filters already narrow the result to one artifact.
+// marketing version, and platform, but retries can reuse that identity, so a
+// fallback is safe only when exactly one matching upload is visible. An
+// incomplete or paginated result is left unmatched rather than guessed.
 func findBuildUploadByVersion(ctx context.Context, client *asc.Client, appID, bundleVersion, shortVersion, platform string) (*asc.BuildUploadResponse, error) {
 	if shortVersion == "" || platform == "" {
 		return nil, nil
@@ -715,6 +714,8 @@ func findBuildUploadByVersion(ctx context.Context, client *asc.Client, appID, bu
 	if err != nil {
 		return nil, err
 	}
+	var match asc.Resource[asc.BuildUploadAttributes]
+	matches := 0
 	for _, upload := range uploads.Data {
 		if strings.TrimSpace(upload.Attributes.CFBundleVersion) != bundleVersion {
 			continue
@@ -725,9 +726,22 @@ func findBuildUploadByVersion(ctx context.Context, client *asc.Client, appID, bu
 		if !strings.EqualFold(strings.TrimSpace(string(upload.Attributes.Platform)), platform) {
 			continue
 		}
-		return &asc.BuildUploadResponse{Data: upload}, nil
+		matches++
+		if matches > 1 {
+			return nil, nil
+		}
+		match = upload
 	}
-	return nil, nil
+	if matches != 1 || strings.TrimSpace(match.ID) == "" {
+		return nil, nil
+	}
+	if strings.TrimSpace(uploads.Links.Next) != "" {
+		return nil, nil
+	}
+	if total, ok := asc.ParsePagingTotalOK(uploads.Meta); ok && total != 1 {
+		return nil, nil
+	}
+	return &asc.BuildUploadResponse{Data: match}, nil
 }
 
 func enrichBuildUploadFailure(ctx context.Context, client *asc.Client, appID string, upload *asc.BuildUploadResponse, baseErr error) error {

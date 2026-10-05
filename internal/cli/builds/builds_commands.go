@@ -69,7 +69,7 @@ its platform is automatically set to MAC_OS.
 
 Examples:
   asc builds upload --app "123456789" --ipa "path/to/app.ipa"
-  asc builds upload --ipa "app.ipa" --version "1.0.0" --build-number "123"
+  asc builds upload --app "123456789" --ipa "app.ipa" --version "1.0.0" --build-number "123"
   asc builds upload --app "123456789" --ipa "app.ipa" --dry-run
   asc builds upload --app "123456789" --ipa "app.ipa" --dry-run --include-sensitive
   asc builds upload --app "123456789" --ipa "app.ipa" --test-notes "Test flow" --locale "en-US"

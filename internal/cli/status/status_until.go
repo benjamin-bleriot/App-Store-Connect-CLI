@@ -139,7 +139,7 @@ func finishUntil(until string, check untilCheck, polls int, output string, prett
 	if result.Reached {
 		message := fmt.Sprintf("status: --until %s ended with outcome %s%s", until, result.Outcome, state)
 		fmt.Fprintln(os.Stderr, message)
-		return shared.NewValidationReportedError(errors.New(message))
+		return shared.NewStderrReportedError(shared.NewValidationError(errors.New(message)))
 	}
 	message := fmt.Sprintf("status: --until %s not reached after %d polls%s", until, polls, state)
 	fmt.Fprintln(os.Stderr, message)

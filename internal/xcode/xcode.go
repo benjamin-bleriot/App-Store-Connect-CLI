@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,6 +23,7 @@ import (
 	"howett.net/plist"
 
 	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/infoplist"
+	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/readonly"
 	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/rootfs"
 	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/secureopen"
 )
@@ -304,6 +306,11 @@ func Export(ctx context.Context, opts ExportOptions) (*ExportResult, error) {
 	uploadMode := isDirectUploadMode(opts.ExportOptions)
 	if opts.IPAPath == "" && opts.PKGPath == "" && !uploadMode {
 		return nil, fmt.Errorf("--ipa-path or --pkg-path is required unless ExportOptions.plist uses destination=upload")
+	}
+	if uploadMode {
+		if err := readonly.Check(ctx, http.MethodPost, "App Store Connect upload via xcodebuild -exportArchive"); err != nil {
+			return nil, err
+		}
 	}
 	if err := ensureXcodeAvailableWithEnvironment(ctx, opts.Environment, opts.terminateProcessGroup); err != nil {
 		return nil, err

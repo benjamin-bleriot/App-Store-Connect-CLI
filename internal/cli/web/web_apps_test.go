@@ -153,6 +153,38 @@ func TestAppCreateCanPromptInteractivelyUsesControllingTTYWhenStdinIsNotTerminal
 	}
 }
 
+func TestAppCreateCanPromptForFieldsRequiresTerminalStdinAndStdout(t *testing.T) {
+	origOpenTTY := openTTYFn
+	origIsTerminal := termIsTerminalFn
+	t.Cleanup(func() {
+		openTTYFn = origOpenTTY
+		termIsTerminalFn = origIsTerminal
+	})
+	openTTYFn = func() (*os.File, error) {
+		return os.Open(os.DevNull)
+	}
+
+	stdinFD := int(os.Stdin.Fd())
+	stdoutFD := int(os.Stdout.Fd())
+	tests := []struct {
+		name      string
+		terminals map[int]bool
+		want      bool
+	}{
+		{name: "stdin only", terminals: map[int]bool{stdinFD: true}, want: false},
+		{name: "stdout only", terminals: map[int]bool{stdoutFD: true}, want: false},
+		{name: "both", terminals: map[int]bool{stdinFD: true, stdoutFD: true}, want: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			termIsTerminalFn = func(fd int) bool { return test.terminals[fd] }
+			if got := appCreateCanPromptForFields(); got != test.want {
+				t.Fatalf("appCreateCanPromptForFields() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
 func TestWebAppsCreatePassesPasswordCompatibilityFlagToSessionResolver(t *testing.T) {
 	origResolveAppCreateSession := resolveAppCreateSessionFn
 	origNewWebClient := newWebClientFn
@@ -730,18 +762,18 @@ func TestWebAppsCreateInteractiveWizardPromptsForMissingFields(t *testing.T) {
 	origNewWebClient := newWebClientFn
 	origEnsureBundleID := ensureBundleIDFn
 	origCreateWebApp := createWebAppFn
-	origCanPrompt := appCreateCanPromptInteractivelyFn
+	origCanPrompt := appCreateCanPromptForFieldsFn
 	t.Cleanup(func() {
 		appCreateAskOneFn = origAskOne
 		resolveAppCreateSessionFn = origResolveAppCreateSession
 		newWebClientFn = origNewWebClient
 		ensureBundleIDFn = origEnsureBundleID
 		createWebAppFn = origCreateWebApp
-		appCreateCanPromptInteractivelyFn = origCanPrompt
+		appCreateCanPromptForFieldsFn = origCanPrompt
 	})
 
 	promptOrder := []string{}
-	appCreateCanPromptInteractivelyFn = func() bool { return true }
+	appCreateCanPromptForFieldsFn = func() bool { return true }
 	appCreateAskOneFn = func(p survey.Prompt, response interface{}, _ ...survey.AskOpt) error {
 		switch prompt := p.(type) {
 		case *survey.Input:
@@ -842,17 +874,17 @@ func TestWebAppsCreateInteractiveWizardPreservesProvidedLocaleDefault(t *testing
 	origNewWebClient := newWebClientFn
 	origEnsureBundleID := ensureBundleIDFn
 	origCreateWebApp := createWebAppFn
-	origCanPrompt := appCreateCanPromptInteractivelyFn
+	origCanPrompt := appCreateCanPromptForFieldsFn
 	t.Cleanup(func() {
 		appCreateAskOneFn = origAskOne
 		resolveAppCreateSessionFn = origResolveAppCreateSession
 		newWebClientFn = origNewWebClient
 		ensureBundleIDFn = origEnsureBundleID
 		createWebAppFn = origCreateWebApp
-		appCreateCanPromptInteractivelyFn = origCanPrompt
+		appCreateCanPromptForFieldsFn = origCanPrompt
 	})
 
-	appCreateCanPromptInteractivelyFn = func() bool { return true }
+	appCreateCanPromptForFieldsFn = func() bool { return true }
 	appCreateAskOneFn = func(p survey.Prompt, response interface{}, _ ...survey.AskOpt) error {
 		switch prompt := p.(type) {
 		case *survey.Input:

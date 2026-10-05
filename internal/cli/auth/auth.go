@@ -19,8 +19,6 @@ import (
 	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/config"
 )
 
-const authKeysURL = "https://appstoreconnect.apple.com/access/integrations/api"
-
 var (
 	loginJWTGenerator        = asc.GenerateJWT
 	loginNetworkValidate     = validateLoginNetwork
@@ -144,7 +142,7 @@ Examples:
 			}
 
 			if *open {
-				if err := openURL(authKeysURL); err != nil {
+				if err := openURL(authsvc.APIKeysURL); err != nil {
 					return fmt.Errorf("auth init: %w", err)
 				}
 			}
@@ -635,6 +633,7 @@ so commands continue to work even if the original .p8 file is removed.`,
 				if hint := keyIDHintFromKeyPath(*keyPath); hint != "" {
 					fmt.Fprintf(os.Stderr, "Hint: the key file name suggests --key-id %s\n", hint)
 				}
+				fmt.Fprintf(os.Stderr, "Hint: create an API key at %s, then run: %s\n", authsvc.APIKeysURL, authsvc.LoginCommandExample)
 				return shared.MissingRequiredUsageError("--key-id")
 			}
 			*keyID = trimmedKeyID
@@ -664,7 +663,9 @@ so commands continue to work even if the original .p8 file is removed.`,
 
 			if *fixPermissions {
 				changed, err := authsvc.FixPrivateKeyFilePermissions(*keyPath)
-				if err != nil {
+				// A missing file is left to ValidateKeyFile below, which
+				// reports it as a usage error naming the path.
+				if kind, _ := authsvc.PrivateKeyErrorKindOf(err); err != nil && kind != authsvc.PrivateKeyNotFound {
 					rendered := errors.New(shared.SanitizeTerminal(fmt.Sprintf("auth login: failed to fix private key permissions: %v", err)))
 					return shared.WithPrivateKeyDiagnostic(shared.NewErrorWithCause(rendered, err), err)
 				}

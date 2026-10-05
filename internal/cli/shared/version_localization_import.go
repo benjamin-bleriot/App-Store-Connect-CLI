@@ -151,14 +151,14 @@ Examples:
 				Total:     len(plan),
 				Results:   make([]asc.LocalizationImportLocaleResult, 0, len(plan)),
 			}
-			executeVersionLocalizationImport(ctx, ops, id, plan, result)
+			refused := executeVersionLocalizationImport(ctx, ops, id, plan, result)
 			if err := PrintOutput(result, *output.Output, *output.Pretty); err != nil {
 				return err
 			}
 			if result.Failed > 0 {
 				err := fmt.Errorf("%s: %d of %d locales failed", config.CommandPath, result.Failed, result.Total)
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				return NewReportedError(err)
+				return NewStderrReportedError(NewErrorWithCause(err, refused))
 			}
 			return nil
 		},
@@ -283,7 +283,8 @@ func planVersionLocalizationImport(desired, existing []VersionLocalization, fiel
 
 // executeVersionLocalizationImport writes each planned locale independently so
 // one rejected locale does not block the others; the receipt reports each one.
-func executeVersionLocalizationImport(ctx context.Context, ops VersionLocalizationImportOps, versionID string, plan []versionLocalizationImportStep, result *asc.LocalizationImportResult) {
+func executeVersionLocalizationImport(ctx context.Context, ops VersionLocalizationImportOps, versionID string, plan []versionLocalizationImportStep, result *asc.LocalizationImportResult) error {
+	var refused error
 	for _, step := range plan {
 		entry := step.LocalizationImportLocaleResult
 		switch {
@@ -305,6 +306,7 @@ func executeVersionLocalizationImport(ctx context.Context, ops VersionLocalizati
 			if err != nil {
 				entry.Status = "failed"
 				entry.Error = err.Error()
+				refused = KeepReadOnlyRefusal(refused, err)
 				result.Failed++
 			} else {
 				entry.Status = "succeeded"
@@ -313,6 +315,7 @@ func executeVersionLocalizationImport(ctx context.Context, ops VersionLocalizati
 		}
 		result.Results = append(result.Results, entry)
 	}
+	return refused
 }
 
 func orderedFieldNames(fields []string, values map[string]string) []string {

@@ -40,7 +40,7 @@ func ReleaseStageCommand() *ffcli.Command {
 
 	return &ffcli.Command{
 		Name:       "stage",
-		ShortUsage: "asc release stage --app \"APP_ID\" --version \"2.4.0\" --build-id \"BUILD_ID\" (--metadata-dir \"./metadata/version/2.4.0\" | --copy-metadata-from \"2.3.2\") [--routing-coverage-file \"./coverage.geojson\"] [flags]",
+		ShortUsage: "asc release stage --app \"APP_ID\" --version \"2.4.0\" --build-id \"BUILD_ID\" (--metadata-dir \"./metadata\" | --copy-metadata-from \"2.3.2\") [--routing-coverage-file \"./coverage.geojson\"] [flags]",
 		ShortHelp:  "Run version + metadata + attach + validate.",
 		LongHelp: `Run a deterministic pre-submit App Store staging pipeline:
 1. Verify --build-id exists, belongs to --app, and matches --platform
@@ -66,7 +66,7 @@ checkpoint. List the remaining blockers with:
 Examples:
   asc release stage --app "APP_ID" --version "2.4.0" --build-id "BUILD_ID" --copy-metadata-from "2.3.2" --dry-run
   asc release stage --app "APP_ID" --version "2.4.0" --build-id "BUILD_ID" --copy-metadata-from "2.3.2" --confirm
-  asc release stage --app "APP_ID" --version "2.4.0" --build-id "BUILD_ID" --metadata-dir "./metadata/version/2.4.0" --confirm
+  asc release stage --app "APP_ID" --version "2.4.0" --build-id "BUILD_ID" --metadata-dir "./metadata" --confirm
   asc release stage --app "APP_ID" --version "2.4.0" --build-id "BUILD_ID" --copy-metadata-from "2.3.2" --routing-coverage-file "./coverage.geojson" --confirm`,
 		FlagSet:   fs,
 		UsageFunc: shared.DefaultUsageFunc,
@@ -166,12 +166,13 @@ Examples:
 				StrictValidate:              *strictValidate,
 				CheckpointFile:              absCheckpointPath,
 			})
-			if printErr := shared.PrintOutput(result, *output.Output, *output.Pretty); printErr != nil {
+			if printErr := printStageResult(result, *output.Output, *output.Pretty); printErr != nil {
 				return printErr
 			}
 			if runErr != nil {
 				if blocked, ok := errors.AsType[readinessBlockedError](runErr); ok {
 					printReadinessBlockers(os.Stderr, blocked.report, resolvedAppID, trimmedVersion, normalizedPlatform)
+					return shared.NewStderrReportedError(runErr)
 				}
 				return shared.NewReportedError(runErr)
 			}

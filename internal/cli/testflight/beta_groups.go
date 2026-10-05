@@ -1153,6 +1153,7 @@ func BetaGroupsDeleteCommand() *ffcli.Command {
 
 	id := shared.BindResourceIDFlag(fs, "id", "betaGroups", "Beta group ID")
 	confirm := fs.Bool("confirm", false, "Confirm deletion")
+	output := shared.BindOutputFlags(fs)
 
 	return &ffcli.Command{
 		Name:       "delete",
@@ -1184,6 +1185,11 @@ Examples:
 
 			if err := client.DeleteBetaGroup(requestCtx, strings.TrimSpace(*id)); err != nil {
 				return fmt.Errorf("beta-groups delete: failed to delete: %w", err)
+			}
+
+			result := &asc.BetaGroupDeleteResult{ID: strings.TrimSpace(*id), Deleted: true}
+			if err := shared.PrintOutput(result, *output.Output, *output.Pretty); err != nil {
+				return err
 			}
 
 			fmt.Fprintf(os.Stderr, "Successfully deleted group %s\n", strings.TrimSpace(*id))
@@ -1366,6 +1372,7 @@ func BetaGroupsRemoveTestersCommand() *ffcli.Command {
 	group := shared.BindResourceIDFlag(fs, "group", "betaGroups", "Beta group ID")
 	tester := shared.BindOnceCSVFlag(fs, "tester", "Beta tester ID(s), comma-separated")
 	confirm := fs.Bool("confirm", false, "Confirm removal")
+	output := shared.BindOutputFlags(fs)
 
 	return &ffcli.Command{
 		Name:       "remove-testers",
@@ -1405,6 +1412,15 @@ Examples:
 
 			if err := client.RemoveBetaTestersFromGroup(requestCtx, groupID, testerIDs); err != nil {
 				return fmt.Errorf("beta-groups remove-testers: failed to remove testers: %w", err)
+			}
+
+			result := &asc.BetaGroupTestersUpdateResult{
+				GroupID:   groupID,
+				TesterIDs: testerIDs,
+				Action:    asc.BetaGroupTestersActionRemoved,
+			}
+			if err := shared.PrintOutput(result, *output.Output, *output.Pretty); err != nil {
+				return err
 			}
 
 			fmt.Fprintf(os.Stderr, "Successfully removed %d tester(s) from group %s\n", len(testerIDs), groupID)

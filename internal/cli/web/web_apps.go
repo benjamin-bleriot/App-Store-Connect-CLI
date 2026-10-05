@@ -268,8 +268,9 @@ func WebAppsCreateCommand() *ffcli.Command {
 Create an app through Apple's web API using a web-session login.
 This is the canonical app-creation path for web-session based flows.
 
-If required fields are omitted in an interactive terminal, the CLI will prompt
-for the missing app-creation inputs.
+If required fields are omitted in an interactive terminal (stdin and stdout are
+both terminals), the CLI will prompt for the missing app-creation inputs.
+Otherwise it exits with a usage error listing the missing flags.
 
 --access full|limited applies team access after create through the public
 users API. Limited access requires at least one --user. Omitting --access
