@@ -467,7 +467,7 @@ Examples:
 			if batchResult.Failed > 0 {
 				summaryErr := fmt.Errorf("apps info edit: %d locale(s) failed", batchResult.Failed)
 				fmt.Fprintf(os.Stderr, "Error: %s\n", summaryErr.Error())
-				return shared.NewReportedError(summaryErr)
+				return shared.NewStderrReportedError(summaryErr)
 			}
 			return nil
 		},

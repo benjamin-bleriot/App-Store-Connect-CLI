@@ -224,7 +224,7 @@ end
 set -e
 
 # Upload build
-asc builds upload --ipa ./MyApp.ipa
+asc builds upload --app "123456789" --ipa ./MyApp.ipa
 
 # Notify Slack
 asc notify slack \
@@ -282,7 +282,7 @@ asc notify slack \
 #!/bin/bash
 
 # Run command and capture error
-if ! asc builds upload --ipa ./MyApp.ipa 2>&1; then
+if ! asc builds upload --app "123456789" --ipa ./MyApp.ipa 2>&1; then
   # Notify Slack on failure
   asc notify slack \
     --message "Build upload failed" \

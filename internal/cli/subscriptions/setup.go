@@ -395,7 +395,7 @@ Examples:
 			}
 			if runErr != nil {
 				writeSubscriptionsSetupFailure(os.Stderr, &result)
-				return shared.NewReportedError(runErr)
+				return shared.NewStderrReportedError(runErr)
 			}
 			return nil
 		},

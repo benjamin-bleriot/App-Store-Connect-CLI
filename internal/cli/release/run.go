@@ -87,6 +87,15 @@ type runResult struct {
 	Steps               []stepResult `json:"steps"`
 }
 
+func printStageResult(result runResult, format string, pretty bool) error {
+	headers := []string{"Step", "Status", "Duration (ms)", "Message"}
+	rows := make([][]string, 0, len(result.Steps))
+	for _, step := range result.Steps {
+		rows = append(rows, []string{step.Name, step.Status, fmt.Sprintf("%d", step.DurationMS), step.Message})
+	}
+	return shared.PrintOutputRows(result, format, pretty, headers, rows)
+}
+
 type runCheckpoint struct {
 	AppID               string          `json:"appId"`
 	Version             string          `json:"version"`

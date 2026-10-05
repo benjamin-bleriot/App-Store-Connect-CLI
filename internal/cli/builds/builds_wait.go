@@ -431,5 +431,9 @@ func buildProcessingFailureError(
 	if buildResp != nil {
 		failure.BundleVersion = buildResp.Data.Attributes.Version
 	}
-	return shared.EnrichBuildProcessingFailure(ctx, client, failure, baseErr)
+	return shared.WithDiagnostic(
+		shared.NewValidationError(shared.EnrichBuildProcessingFailure(ctx, client, failure, baseErr)),
+		shared.DiagnosticStateNotReady,
+		"",
+	)
 }

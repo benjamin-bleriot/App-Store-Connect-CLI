@@ -148,7 +148,7 @@ func screenshotUploadRetryError(result asc.AppScreenshotUploadResult, progress s
 	err := fmt.Errorf("%s: %w", summary, cause)
 	fmt.Fprint(os.Stderr, errfmt.FormatStderr(err))
 	fmt.Fprintf(os.Stderr, "Hint: resume with `asc screenshots upload --resume \"%s\"`\n", result.FailureArtifactPath)
-	return shared.NewReportedError(err)
+	return shared.NewStderrReportedError(err)
 }
 
 func warnScreenshotFileNamesAlreadyInSet(files []string, existing []asc.Resource[asc.AppScreenshotAttributes]) {

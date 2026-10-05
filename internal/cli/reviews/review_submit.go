@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/peterbourgon/ff/v3/ffcli"
@@ -165,7 +166,7 @@ Examples:
 					SubmissionID:     existingSubmissionID,
 					AlreadySubmitted: true,
 				}
-				return shared.PrintOutput(result, *output.Output, *output.Pretty)
+				return printReviewSubmitResult(result, *output.Output, *output.Pretty)
 			}
 
 			if err := submitcli.SubmissionLocalizationPreflight(requestCtx, client, resolvedAppID, resolvedVersionID, effectivePlatform, "asc review submit"); err != nil {
@@ -204,7 +205,21 @@ Examples:
 				Messages:         submitResult.Messages,
 			}
 
-			return shared.PrintOutput(result, *output.Output, *output.Pretty)
+			return printReviewSubmitResult(result, *output.Output, *output.Pretty)
 		},
 	}
+}
+
+func printReviewSubmitResult(result reviewSubmitResult, format string, pretty bool) error {
+	headers := []string{"App ID", "Version ID", "Build ID", "Platform", "Submission ID", "Already Submitted", "Dry Run"}
+	rows := [][]string{{
+		result.AppID,
+		result.VersionID,
+		result.BuildID,
+		result.Platform,
+		result.SubmissionID,
+		strconv.FormatBool(result.AlreadySubmitted),
+		strconv.FormatBool(result.DryRun),
+	}}
+	return shared.PrintOutputRows(result, format, pretty, headers, rows)
 }

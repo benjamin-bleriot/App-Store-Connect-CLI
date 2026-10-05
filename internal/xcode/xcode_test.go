@@ -20,6 +20,7 @@ import (
 	"howett.net/plist"
 
 	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/infoplist"
+	"github.com/rudrankriyam/App-Store-Connect-CLI/internal/readonly"
 )
 
 func TestArchiveUnsupportedPlatform(t *testing.T) {
@@ -1494,6 +1495,37 @@ func TestExportDirectUploadDoesNotRequireOrCreateArtifactDestination(t *testing.
 	}
 	if result.PKGPath != "" {
 		t.Fatalf("expected no local pkg path for direct upload, got %q", result.PKGPath)
+	}
+}
+
+func TestExportDirectUploadRefusedInReadOnlyModeBeforeRunningXcodebuild(t *testing.T) {
+	tempDir := t.TempDir()
+	archivePath := filepath.Join(tempDir, "Demo.xcarchive")
+	if err := writeArchiveInfoPlist(archivePath); err != nil {
+		t.Fatalf("writeArchiveInfoPlist() error: %v", err)
+	}
+	exportOptionsPath := filepath.Join(tempDir, "ExportOptions.plist")
+	writeExportOptionsPlist(t, exportOptionsPath, map[string]any{"destination": "upload"})
+	logPath := filepath.Join(tempDir, "commands.log")
+
+	restore := overrideTestEnvironment(t)
+	runtimeGOOS = "darwin"
+	lookPathFn = func(file string) (string, error) {
+		return "/usr/bin/xcodebuild", nil
+	}
+	commandContextFn = helperCommandContext(t, logPath)
+	t.Cleanup(restore)
+	t.Setenv(readonly.EnvVar, "1")
+
+	_, err := Export(context.Background(), ExportOptions{
+		ArchivePath:   archivePath,
+		ExportOptions: exportOptionsPath,
+	})
+	if !errors.Is(err, readonly.ErrRefused) {
+		t.Fatalf("Export() error = %v, want readonly.ErrRefused", err)
+	}
+	if _, statErr := os.Stat(logPath); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("xcodebuild ran in read-only mode (log stat: %v)", statErr)
 	}
 }
 

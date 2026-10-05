@@ -43,6 +43,8 @@ type MetadataKeywordsPlanResult struct {
 	Actions             []ApplyAction                    `json:"actions,omitempty"`
 	Results             []MetadataKeywordsMutationResult `json:"results,omitempty"`
 	Warnings            []MetadataKeywordsWarning        `json:"warnings,omitempty"`
+
+	refused error
 }
 
 type metadataKeywordsPlanOptions struct {
@@ -258,6 +260,7 @@ func executeMetadataKeywordsPlan(ctx context.Context, opts metadataKeywordsPlanO
 	result.Succeeded = applySummary.Succeeded
 	result.Failed = applySummary.Failed
 	result.Actions = applySummary.Actions
+	result.refused = applySummary.refused
 	if applySummary.Failed == 0 {
 		result.Applied = true
 		return result, nil

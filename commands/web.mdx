@@ -172,6 +172,19 @@ it asks for `--apple-id`; without a password source it asks for a terminal or
 `ASC_WEB_PASSWORD`. To check for a session without failing, run
 `asc web auth status`; it prints `"authenticated":false` and exits `0`.
 
+Without an interactive terminal, signing in also needs a two-factor code
+source: `--two-factor-code-command` or `ASC_WEB_2FA_CODE_COMMAND`. A fresh
+sign-in that has neither exits with code `1` before sending the password to
+Apple, so no verification code is delivered. A sign-in that reuses an expired
+cached session still tries it, and stops before requesting a code if Apple asks
+for one:
+
+```text
+Error: 2fa required: run in a terminal for an interactive prompt, pass --two-factor-code-command, or set ASC_WEB_2FA_CODE_COMMAND
+```
+
+A verification code Apple rejects exits with code `3`.
+
 ## Command families
 
 ### `asc web auth`

@@ -2179,13 +2179,13 @@ func TestAgeRatingValidationErrors(t *testing.T) {
 			name:     "age-rating view conflicting targets",
 			args:     []string{"age-rating", "view", "--app-info-id", "INFO_ID", "--version-id", "VERSION_ID"},
 			wantErr:  "only one of --app-info-id or --version-id is allowed",
-			wantHelp: false,
+			wantHelp: true,
 		},
 		{
 			name:     "age-rating edit conflicting targets",
 			args:     []string{"age-rating", "edit", "--app-info-id", "INFO_ID", "--version-id", "VERSION_ID"},
 			wantErr:  "only one of --app-info-id or --version-id is allowed",
-			wantHelp: false,
+			wantHelp: true,
 		},
 		{
 			name:     "age-rating edit missing target",
